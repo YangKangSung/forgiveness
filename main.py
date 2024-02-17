@@ -1,6 +1,8 @@
 import requests
 from urllib.parse import quote
 from bs4 import BeautifulSoup
+from torrentp import TorrentDownloader
+
 
 base_url="https://torrenttop88.com"
 def extract_links(keyword):
@@ -19,15 +21,30 @@ def extract_links(keyword):
   return links
 
 def extract_magnet_links(href):
-	url = f"{base_url}{href}"
-	print(f"{url=}")
+    url = f"{base_url}{href}"
+    print(f"{url=}")
 
-	response = requests.get(url)
-	response.raise_for_status()
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        print(f"Failed to retrieve URL: {e}")
+        return None
 
-	soup = BeautifulSoup(response.content, "html.parser")
-	items = soup.find_all("div", class_="p-3")
-	print(items)
+    if not response.content:
+        print("Empty response content")
+        return None
+
+    soup = BeautifulSoup(response.content, "html.parser")
+    items = soup.find_all("div", class_="p-3")
+
+    href = None
+    if items:
+        href_tag = items[0].find("a")
+        href = href_tag.get("href") if href_tag else None
+
+    print(f"{href=}")
+    return href
 
 encoded_keyword = quote(input("검색어를 입력하세요: "))
 links = extract_links(encoded_keyword)
@@ -37,7 +54,12 @@ for link in links:
 
 first_item = links[0] if links else None
 print(f"{first_item=}")
-
-link = extract_magnet_links(first_item['href'])
-
-
+href = first_item.get('href') if first_item else None
+print(f"{href=}" if href else "No 'href' found in first_item")
+link = extract_magnet_links(href)
+if link is not None:
+    print(f"{link=}")
+    torrent_file = TorrentDownloader(link, '.')
+    torrent_file.start_download()
+else:
+    print("No magnet link found, skipping torrent download")
