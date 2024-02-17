@@ -1,4 +1,5 @@
 import requests
+from urllib.parse import quote
 from bs4 import BeautifulSoup
 
 def extract_links(keyword):
@@ -37,8 +38,11 @@ def extract_links(keyword):
 # 검색어 입력
 keyword = input("검색어를 입력하세요: ")
 
+# URL을 인코딩
+encoded_keyword = quote(keyword)
+
 # 링크 추출
-links = extract_links(keyword)
+links = extract_links(encoded_keyword)
 
 # 결과 출력
 print(f"총 {len(links)}개의 링크를 찾았습니다.")
